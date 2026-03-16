@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initSocket() {
         if (!socket) {
-            socket = io();
+            socket = io({ transports: ['polling'] });
             const myUsername = window.CURRENT_USERNAME || 'Anonymous';
             socket.emit('join', { username: myUsername });
 
