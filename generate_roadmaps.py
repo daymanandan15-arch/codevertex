@@ -416,19 +416,13 @@ ROADMAPS = [
   },
 ]
 
-# ─────────────────────────────────────────────────────────────────────────────
-app = create_app()
+def seed_roadmaps():
+    print("Checking if roadmaps need seeding...")
+    if Roadmap.query.first():
+        print("Roadmaps table is not empty. Skipping automatic seed.")
+        return
 
-with app.app_context():
-    print("Truncating existing roadmap data (FK-safe)...")
-    with db.engine.begin() as conn:
-        conn.execute(text("PRAGMA foreign_keys = OFF"))
-        conn.execute(text("DELETE FROM node_resources"))
-        conn.execute(text("DELETE FROM user_progress"))
-        conn.execute(text("DELETE FROM roadmap_nodes"))
-        conn.execute(text("DELETE FROM roadmaps"))
-        conn.execute(text("PRAGMA foreign_keys = ON"))
-
+    print("Seeding roadmaps for the first time...")
     total_nodes = 0
     total_resources = 0
 
@@ -449,3 +443,30 @@ with app.app_context():
 
     db.session.commit()
     print(f"✅  Seeded {len(ROADMAPS)} roadmaps, {total_nodes} topics, {total_resources} free resource links.")
+
+if __name__ == '__main__':
+    app = create_app()
+    with app.app_context():
+        # For manual CLI running, truncate first
+        print("Truncating existing roadmap data (FK-safe)...")
+        # Try PRAGMA (SQLite), ignore if fails (Postgres)
+        try:
+            with db.engine.begin() as conn:
+                conn.execute(text("PRAGMA foreign_keys = OFF"))
+        except:
+            pass
+            
+        with db.engine.begin() as conn:
+            conn.execute(text("DELETE FROM node_resources"))
+            conn.execute(text("DELETE FROM user_progress"))
+            conn.execute(text("DELETE FROM roadmap_nodes"))
+            conn.execute(text("DELETE FROM roadmaps"))
+            
+        try:
+            with db.engine.begin() as conn:
+                conn.execute(text("PRAGMA foreign_keys = ON"))
+        except:
+            pass
+            
+        seed_roadmaps()
+
