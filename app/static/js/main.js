@@ -75,7 +75,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const convoName = document.getElementById('convo-name');
     const convoAvatar = document.getElementById('convo-avatar');
 
-    if (!fab || !drawer) return; // Chat not in DOM on some pages
+    // Removed early return allowing background triggers to initialize
+
 
     // We only have one global thread for now
     let unreadCount = 0;
@@ -144,8 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
         content += `<div>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
         
         bubble.innerHTML = content;
-        msgsList.appendChild(bubble);
-        msgsList.scrollTop = msgsList.scrollHeight;
+        if (msgsList) {
+            msgsList.appendChild(bubble);
+            msgsList.scrollTop = msgsList.scrollHeight;
+        }
 
         // Dashboard Sidebar Mirror
         const sidebarMsgs = document.getElementById('sidebar-chat-messages');
@@ -164,8 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
         sys.style.color = 'var(--text-muted)';
         sys.style.margin = '0.5rem 0';
         sys.textContent = text;
-        msgsList.appendChild(sys);
-        msgsList.scrollTop = msgsList.scrollHeight;
+        if (msgsList) {
+            msgsList.appendChild(sys);
+            msgsList.scrollTop = msgsList.scrollHeight;
+        }
 
         const sidebarMsgs = document.getElementById('sidebar-chat-messages');
         if (sidebarMsgs) {
@@ -219,7 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Toggle drawer
-    fab.addEventListener('click', () => {
+    fab && fab.addEventListener('click', () => {
+        if (!drawer) return;
         const isOpen = drawer.classList.toggle('open');
         fab.setAttribute('aria-expanded', isOpen);
         if (isOpen) {
