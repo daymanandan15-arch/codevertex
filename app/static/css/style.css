@@ -1134,6 +1134,36 @@ a:hover {
     gap: 0.75rem;
 }
 
+/* ── Chat Bubbles ── */
+.chat-bubble {
+    max-width: 85%;
+    padding: 0.6rem 0.85rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    word-break: break-word;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.chat-bubble.me {
+    background: var(--accent);
+    color: #000;
+    align-self: flex-end;
+    border-bottom-right-radius: 2px;
+}
+
+.chat-bubble.them {
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+}
+
+.chat-bubble .msg-content {
+    color: inherit;
+}
+
+
 .sidebar-chat-input-form {
     padding: 1rem;
     border-top: 1px solid var(--border);
@@ -1228,4 +1258,22 @@ a:hover {
 
 .toast-bubble.visible {
     transform: translateX(0);
+}
+
+/* ── Community Index Layout ── */
+.community-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2rem;
+    align-items: start;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .community-layout {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
 }
