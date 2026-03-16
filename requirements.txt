@@ -10,3 +10,5 @@ gunicorn
 Flask-Login
 Flask-WTF
 email-validator
+Flask-SocketIO==5.3.6
+eventlet==0.33.3
