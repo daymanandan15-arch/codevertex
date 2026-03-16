@@ -67,13 +67,17 @@ def index():
     roadmaps    = Roadmap.query.all()
     resources   = Resource.query.order_by(desc(Resource.created_at)).limit(12).all()
 
+    # ── FORUM INTEGRATION ──
+    posts       = Post.query.order_by(desc(Post.created_at)).limit(4).all()
+
     matched_jobs = compute_matched_jobs(all_jobs)
     # Sort: matched jobs first (by score desc), then the rest
     latest_jobs = sorted(all_jobs, key=lambda j: matched_jobs.get(j.id, 0), reverse=True)[:12]
 
     return render_template('index.html', news=latest_news, jobs=latest_jobs,
                            roadmaps=roadmaps, resources=resources,
-                           matched_jobs=matched_jobs)
+                           matched_jobs=matched_jobs, posts=posts)
+
 
 @bp.route('/api/feed')
 def api_feed():
