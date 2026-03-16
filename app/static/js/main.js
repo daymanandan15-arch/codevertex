@@ -134,28 +134,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     function appendMessage(sender, text) {
-        const bubble = document.createElement('div');
-        const isMe = (sender === window.CURRENT_USERNAME && window.CURRENT_USERNAME !== '');
-        bubble.className = `chat-bubble ${isMe ? 'me' : 'them'}`;
-        
-        let content = '';
-        if (!isMe) {
-            content += `<div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:0.2rem; font-weight:600;">@${sender}</div>`;
-        }
-        content += `<div>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
-        
-        bubble.innerHTML = content;
-        if (msgsList) {
-            msgsList.appendChild(bubble);
-            msgsList.scrollTop = msgsList.scrollHeight;
-        }
+        try {
+            const bubble = document.createElement('div');
+            const isMe = (sender === window.CURRENT_USERNAME && window.CURRENT_USERNAME !== '');
+            bubble.className = `chat-bubble ${isMe ? 'me' : 'them'}`;
+            
+            let content = '';
+            if (!isMe) {
+                content += `<div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:0.2rem; font-weight:600;">@${sender}</div>`;
+            }
+            content += `<div>${text.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`;
+            
+            bubble.innerHTML = content;
+            if (msgsList) {
+                msgsList.appendChild(bubble);
+                msgsList.scrollTop = msgsList.scrollHeight;
+            }
 
-        // Dashboard Sidebar Mirror
-        const sidebarMsgs = document.getElementById('sidebar-chat-messages');
-        if (sidebarMsgs) {
-            const sbBubble = bubble.cloneNode(true);
-            sidebarMsgs.appendChild(sbBubble);
-            sidebarMsgs.scrollTop = sidebarMsgs.scrollHeight;
+            // Dashboard Sidebar Mirror
+            const sidebarMsgs = document.getElementById('sidebar-chat-messages');
+            if (sidebarMsgs) {
+                const sbBubble = bubble.cloneNode(true);
+                sidebarMsgs.appendChild(sbBubble);
+                sidebarMsgs.scrollTop = sidebarMsgs.scrollHeight;
+            }
+        } catch (err) {
+            alert("Chat Render Crash: " + err.message);
         }
     }
 
