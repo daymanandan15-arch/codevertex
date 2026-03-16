@@ -300,4 +300,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Auto-init socket if sidebar chat exists to keep Live streams alive
+    if (document.getElementById('sidebar-chat-messages')) {
+        initSocket();
+    }
+
 });
