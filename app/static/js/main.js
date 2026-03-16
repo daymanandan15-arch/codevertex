@@ -112,11 +112,11 @@ document.addEventListener('DOMContentLoaded', () => {
             socket.emit('join', { username: myUsername });
 
             socket.on('chat_message', (data) => {
+                showToast(`💬 @${data.username}: ${data.msg}`);
                 appendMessage(data.username, data.msg);
-                if (window.CURRENT_USERNAME && data.username !== window.CURRENT_USERNAME) {
-                    showToast(`💬 @${data.username}: ${data.msg}`);
-                }
+                
                 if (!drawer.classList.contains('open') || convoView.style.display === 'none') {
+
                     unreadCount++;
                     updateBadge();
                 }
@@ -283,6 +283,10 @@ document.addEventListener('DOMContentLoaded', () => {
         initSocket();
         const myUsername = window.CURRENT_USERNAME || 'Anonymous';
         socket.emit('chat_message', { username: myUsername, msg: text });
+        
+        // Immediate Local Append for sending feedback
+        appendMessage(myUsername, text);
+        
         input.value = '';
     }
 
