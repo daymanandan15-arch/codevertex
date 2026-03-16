@@ -3,7 +3,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from urllib.parse import urlparse
 from sqlalchemy import desc
 
-from app.extensions import db
+from app.extensions import db, socketio
 from app.models.news import NewsItem
 from app.models.job import JobListing
 from app.models.roadmap import Roadmap, RoadmapNode, UserProgress
@@ -214,6 +214,18 @@ def community_create_post():
         # +5 RP for creating a post
         current_user.reputation = (current_user.reputation or 0) + 5
         db.session.commit()
+        
+        # Broadcast socket notification for new post
+        try:
+            socketio.emit('new_post', {
+                'title': post.title,
+                'author': current_user.username,
+                'subreddit': post.subreddit.name if post.subreddit else 'General',
+                'url': url_for('views.community_post_detail', post_id=post.id)
+            })
+        except Exception as e:
+            print(f"Socket emit failed: {e}")
+
         if bounty_val > 0:
             flash(f'Post created successfully with a {bounty_val} RP Bounty! ✨', 'success')
         else:

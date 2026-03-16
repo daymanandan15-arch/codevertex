@@ -112,10 +112,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             socket.on('chat_message', (data) => {
                 appendMessage(data.username, data.msg);
+                if (window.CURRENT_USERNAME && data.username !== window.CURRENT_USERNAME) {
+                    showToast(`💬 @${data.username}: ${data.msg}`);
+                }
                 if (!drawer.classList.contains('open') || convoView.style.display === 'none') {
                     unreadCount++;
                     updateBadge();
                 }
+            });
+
+            socket.on('new_post', (data) => {
+                showToast(`🔥 New Post in r/${data.subreddit}: ${data.title}`, data.url);
             });
 
             socket.on('system_message', (data) => {
@@ -123,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
 
     function appendMessage(sender, text) {
         const bubble = document.createElement('div');
@@ -138,7 +146,16 @@ document.addEventListener('DOMContentLoaded', () => {
         bubble.innerHTML = content;
         msgsList.appendChild(bubble);
         msgsList.scrollTop = msgsList.scrollHeight;
+
+        // Dashboard Sidebar Mirror
+        const sidebarMsgs = document.getElementById('sidebar-chat-messages');
+        if (sidebarMsgs) {
+            const sbBubble = bubble.cloneNode(true);
+            sidebarMsgs.appendChild(sbBubble);
+            sidebarMsgs.scrollTop = sidebarMsgs.scrollHeight;
+        }
     }
+
 
     function appendSystemMessage(text) {
         const sys = document.createElement('div');
@@ -149,7 +166,15 @@ document.addEventListener('DOMContentLoaded', () => {
         sys.textContent = text;
         msgsList.appendChild(sys);
         msgsList.scrollTop = msgsList.scrollHeight;
+
+        const sidebarMsgs = document.getElementById('sidebar-chat-messages');
+        if (sidebarMsgs) {
+            const sbSys = sys.cloneNode(true);
+            sidebarMsgs.appendChild(sbSys);
+            sidebarMsgs.scrollTop = sidebarMsgs.scrollHeight;
+        }
     }
+
 
     function openConvo(id) {
         const thread = THREADS.find(t => t.id === id);
@@ -217,5 +242,62 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     updateBadge();
+
+    // Auto-init socket socket if Sidebar exists (Dashboard load)
+    const sidebar = document.getElementById('sidebar-chat-messages');
+    if (sidebar) {
+        initSocket();
+    }
+
+    // Toast Alert Helper
+    function showToast(text, url = '#') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        
+        const toast = document.createElement('div');
+        toast.className = 'toast-bubble';
+        toast.innerHTML = `<a href="${url}" style="color:inherit; text-decoration:none;">${text}</a>`;
+        
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('visible'), 100);
+        setTimeout(() => {
+            toast.classList.remove('visible');
+            setTimeout(() => toast.remove(), 300);
+        }, 4500);
+    }
+    
+    // Global support for dashboard input
+    window.sendSidebarChat = function(e) {
+        e.preventDefault();
+        const input = document.getElementById('sidebar-chat-input');
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+        
+        initSocket();
+        const myUsername = window.CURRENT_USERNAME || 'Anonymous';
+        socket.emit('chat_message', { username: myUsername, msg: text });
+        input.value = '';
+    }
+
+    window.switchDashboardTab = function(tab) {
+        const feedCol = document.getElementById('dash-feed-column');
+        const chatCol = document.getElementById('dash-chat-column');
+        const btns = document.querySelectorAll('#dashboard-mobile-tabs .tab-btn');
+        
+        if (!feedCol || !chatCol) return;
+        
+        if (tab === 'feed') {
+            feedCol.style.display = 'block';
+            chatCol.style.display = 'none';
+            btns[0].classList.add('active');
+            btns[1].classList.remove('active');
+        } else {
+            feedCol.style.display = 'none';
+            chatCol.style.display = 'block';
+            btns[0].classList.remove('active');
+            btns[1].classList.add('active');
+        }
+    }
 
 });

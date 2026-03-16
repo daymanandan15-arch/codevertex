@@ -137,10 +137,14 @@
     </div>
 
     <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+    <!-- Live Toast Notification Anchor Container -->
+    <div id="toast-container"></div>
+
     <script>
         window.CURRENT_USERNAME = "{{ current_user.username if current_user.is_authenticated else '' }}";
     </script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+
 
 </html>
