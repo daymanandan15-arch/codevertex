@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Create Community | Engineering Portal{% endblock %}
+
+{% block content %}
+<div style="max-width:600px; margin:0 auto;">
+    <div class="card" style="padding:2.5rem; border-top:3px solid var(--accent);">
+        <h2 style="margin:0 0 0.5rem;">Create a Community</h2>
+        <p style="color:var(--text-muted); margin:0 0 2rem; font-size:0.9rem;">Build a space for developers who share your interests.</p>
+
+        <form method="POST" action="{{ url_for('views.create_subreddit') }}">
+            <!-- Name -->
+            <div class="form-group">
+                <label for="name" style="font-weight:600;">Community Name</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Python Developers" required maxlength="100">
+            </div>
+
+            <!-- Slug -->
+            <div class="form-group">
+                <label for="slug" style="font-weight:600;">
+                    Slug <span style="color:var(--text-muted); font-weight:400; font-size:0.85rem;">(used in the URL: c/your-slug)</span>
+                </label>
+                <div style="display:flex; align-items:center; gap:0.5rem;">
+                    <span style="color:var(--text-muted); font-size:0.9rem; white-space:nowrap;">c/</span>
+                    <input type="text" id="slug" name="slug" class="form-control" placeholder="python" required maxlength="50"
+                           pattern="[a-z0-9\-]+" title="Only lowercase letters, numbers, and hyphens" style="flex:1;">
+                </div>
+                <small style="color:var(--text-muted);">Lowercase letters, numbers, and hyphens only.</small>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label for="description" style="font-weight:600;">Description</label>
+                <textarea id="description" name="description" class="form-control" rows="3"
+                          placeholder="What is this community about?" style="resize:vertical;"></textarea>
+            </div>
+
+            <!-- Emoji & Color row -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.5rem;">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="icon_emoji" style="font-weight:600;">Icon Emoji</label>
+                    <input type="text" id="icon_emoji" name="icon_emoji" class="form-control" placeholder="💬" maxlength="4" style="font-size:1.5rem; text-align:center;">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label for="color" style="font-weight:600;">Accent Color</label>
+                    <input type="color" id="color" name="color" value="#38bdf8"
+                           style="width:100%; height:46px; border-radius:8px; border:1px solid var(--border); cursor:pointer; background:transparent;">
+                </div>
+            </div>
+
+            <!-- Preview -->
+            <div id="preview-box" style="background:var(--bg-secondary); border:1px solid var(--border); border-radius:10px; padding:1rem; margin-bottom:1.5rem; display:flex; align-items:center; gap:0.75rem;">
+                <div id="prev-icon" style="width:44px;height:44px;border-radius:50%;background:rgba(56,189,248,0.15);border:2px solid #38bdf8;display:flex;align-items:center;justify-content:center;font-size:1.4rem;">💬</div>
+                <div>
+                    <div id="prev-slug" style="font-weight:700; font-size:0.95rem;">c/your-slug</div>
+                    <div id="prev-name" style="font-size:0.8rem; color:var(--text-muted);">Community Name</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width:100%;">Create Community 🎉</button>
+        </form>
+    </div>
+</div>
+
+<script>
+const nameEl    = document.getElementById('name');
+const slugEl    = document.getElementById('slug');
+const emojiEl   = document.getElementById('icon_emoji');
+const colorEl   = document.getElementById('color');
+const prevIcon  = document.getElementById('prev-icon');
+const prevSlug  = document.getElementById('prev-slug');
+const prevName  = document.getElementById('prev-name');
+
+function updatePreview() {
+    const color = colorEl.value;
+    prevIcon.style.background  = color + '22';
+    prevIcon.style.borderColor = color;
+    prevIcon.textContent = emojiEl.value || '💬';
+    prevSlug.textContent = 'c/' + (slugEl.value || 'your-slug');
+    prevName.textContent = nameEl.value || 'Community Name';
+}
+
+// Auto-generate slug from name
+nameEl.addEventListener('input', () => {
+    slugEl.value = nameEl.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '');
+    updatePreview();
+});
+[slugEl, emojiEl, colorEl].forEach(el => el.addEventListener('input', updatePreview));
+</script>
+{% endblock %}

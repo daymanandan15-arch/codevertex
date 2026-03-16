@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Resource Hub | Engineering Portal{% endblock %}
+
+{% block content %}
+<header class="section-header" style="justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+    <div>
+        <h2>Resource Hub</h2>
+        <p class="auth-subtitle">Curated links to top-tier courses, playlists, and repositories.</p>
+    </div>
+    {% if current_user.is_authenticated %}
+    <a href="{{ url_for('views.resources_add_resource') }}" class="btn btn-primary" style="padding: 0.6rem 1.2rem;">+ Submit
+        Resource</a>
+    {% endif %}
+</header>
+
+<div class="resource-grid">
+    {% for resource in resources %}
+    <div class="card resource-card">
+        <div class="resource-header">
+            <span class="resource-type badge">{{ resource.resource_type }}</span>
+        </div>
+        <h3><a href="{{ resource.url }}" target="_blank" rel="noopener noreferrer">{{ resource.title }}</a></h3>
+
+        <div class="resource-meta" style="margin-top: 1rem;">
+            {% if resource.tags %}
+            <div class="tags" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                {% for tag in resource.tags.split(',') %}
+                <span class="tag"
+                    style="background: rgba(56, 189, 248, 0.1); color: var(--accent); padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem;">#{{
+                    tag.strip() }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem;">
+                Added {{ resource.created_at.strftime('%b %d, %Y') }}
+            </p>
+        </div>
+    </div>
+    {% else %}
+    <p class="empty-state">No resources have been curated yet.</p>
+    {% endfor %}
+</div>
+
+<style>
+    .resource-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .resource-card {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.2s;
+        border-top: 2px solid transparent;
+    }
+
+    .resource-card:hover {
+        transform: translateY(-5px);
+        border-top-color: var(--accent);
+    }
+
+    .resource-type {
+        margin-bottom: 1rem;
+        display: inline-block;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .resource-card h3 a {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 1.2rem;
+    }
+
+    .resource-card h3 a:hover {
+        color: var(--accent);
+    }
+</style>
+{% endblock %}

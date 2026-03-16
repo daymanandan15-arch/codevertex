@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Roadmaps | Engineering Portal{% endblock %}
+
+{% block content %}
+<header class="section-header">
+    <h2>Engineering Skill Trees</h2>
+    <p class="auth-subtitle">Interactive roadmaps to master modern software architectures.</p>
+</header>
+
+<div class="roadmap-grid">
+    {% for roadmap in roadmaps %}
+    <div class="card roadmap-card">
+        <h3>{{ roadmap.title }}</h3>
+        <p>{{ roadmap.description }}</p>
+        <div class="roadmap-footer">
+            <span class="badge">{{ roadmap.nodes.count() }} Nodes</span>
+            <a href="{{ url_for('views.roadmaps_detail', id=roadmap.id) }}" class="btn btn-primary"
+                style="padding: 0.5rem 1rem;">View Path &rarr;</a>
+        </div>
+    </div>
+    {% else %}
+    <p class="empty-state">No roadmaps have been built yet. Check back soon!</p>
+    {% endfor %}
+</div>
+
+<style>
+    .roadmap-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 2rem;
+        margin-top: 2rem;
+    }
+
+    .roadmap-card {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .roadmap-card p {
+        color: var(--text-muted);
+        flex-grow: 1;
+        margin: 1rem 0;
+    }
+
+    .roadmap-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid var(--border);
+        padding-top: 1rem;
+    }
+</style>
+{% endblock %}

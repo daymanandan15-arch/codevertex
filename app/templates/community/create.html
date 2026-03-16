@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Create Post | Forum{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width: 800px; margin: 0 auto;">
+    <div class="auth-box card">
+        <div class="auth-header">
+            <h2>Start a Discussion</h2>
+            <p class="auth-subtitle">Share your knowledge or ask for help. Earn <span style="color:#f97316; font-weight:700;">+5 RP</span> for every post!</p>
+        </div>
+
+        <form action="{{ url_for('views.community_create_post') }}" method="POST" id="create-post-form">
+            <!-- Post Type Toggle -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label style="display: block; margin-bottom: 0.75rem; font-weight: 600;">Post Type</label>
+                <div style="display: flex; gap: 1rem;">
+                    <label class="type-toggle" style="flex:1; cursor:pointer;">
+                        <input type="radio" name="post_type" value="discussion" checked style="display:none;" id="type-discussion">
+                        <div class="type-card" id="card-discussion" style="border: 2px solid var(--accent); border-radius: 10px; padding: 1rem; text-align:center; transition: all 0.2s;">
+                            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">💬</div>
+                            <div style="font-weight: 600;">Discussion</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Ask questions or share thoughts</div>
+                        </div>
+                    </label>
+                    <label class="type-toggle" style="flex:1; cursor:pointer;">
+                        <input type="radio" name="post_type" value="review_request" style="display:none;" id="type-review">
+                        <div class="type-card" id="card-review" style="border: 2px solid var(--border); border-radius: 10px; padding: 1rem; text-align:center; transition: all 0.2s;">
+                            <div style="font-size: 1.5rem; margin-bottom: 0.25rem;">📋</div>
+                            <div style="font-weight: 600;">Code Review</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Get feedback on your code</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Community Selection -->
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="subreddit_id" style="font-weight: 600;">Community <span style="color:var(--text-muted); font-weight:400;">(Optional)</span></label>
+                <select id="subreddit_id" name="subreddit_id" class="form-control" style="appearance: auto; background-color: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary);">
+                    <option value="">-- Post to General Forum --</option>
+                    {% for sub in subreddits %}
+                    <option value="{{ sub.id }}" {% if preselect == sub.slug %}selected{% endif %}>{{ sub.icon_emoji }} c/{{ sub.slug }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 1rem; align-items: flex-start;">
+                <div class="form-group" style="flex: 3; margin-bottom: 0;">
+                    <label for="title">Post Title</label>
+                    <input type="text" id="title" name="title" class="form-control"
+                        placeholder="e.g., Best practices for scaling Postgres?" required>
+                </div>
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label for="flair">Flair <span style="color:var(--text-muted); font-weight:400;">(Optional)</span></label>
+                    <select id="flair" name="flair" class="form-control" style="appearance: auto; background-color: var(--bg-primary); border: 1px solid var(--border); color: var(--text-primary);">
+                        <option value="">-- None --</option>
+                        <option value="Discussion">Discussion</option>
+                        <option value="Help">Help</option>
+                        <option value="Showcase">Showcase</option>
+                        <option value="Resource">Resource</option>
+                        <option value="Career">Career</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                    <label for="bounty">Bounty (RP) <span style="color:var(--text-muted); font-weight:400;">(Optional)</span></label>
+                    <input type="number" id="bounty" name="bounty" class="form-control" value="0" min="0" max="{{ current_user.reputation or 0 }}" style="font-weight:700; color:#f97316;">
+                    <small style="color: var(--text-muted); display: block; margin-top: 0.25rem;">Deducted from your balance.</small>
+                </div>
+            </div>
+            <br>
+
+            <div class="form-group">
+                <label for="content">Body</label>
+                <textarea id="content" name="content" class="form-control" rows="6"
+                    placeholder="Provide context, background information, or describe what you need feedback on..." required
+                    style="resize: vertical;"></textarea>
+            </div>
+
+            <!-- Code Snippet (only for review_request) -->
+            <div class="form-group" id="code-snippet-group" style="display:none;">
+                <label for="code_snippet">Code Snippet to Review</label>
+                <textarea id="code_snippet" name="code_snippet" class="form-control" rows="10"
+                    placeholder="Paste your code here..."
+                    style="resize: vertical; font-family: 'Courier New', monospace; font-size: 0.9rem; background: #0d0d0d; color: #a5f3fc;"></textarea>
+                <small style="color: var(--text-muted); display: block; margin-top: 0.5rem;">The community can earn +50 RP by providing a best answer.</small>
+            </div>
+
+            <div class="form-group" style="margin-top: 2rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Post +5 RP ✨</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const radios = document.querySelectorAll('input[name="post_type"]');
+    const codeGroup = document.getElementById('code-snippet-group');
+    const cardDiscussion = document.getElementById('card-discussion');
+    const cardReview = document.getElementById('card-review');
+
+    radios.forEach(r => r.addEventListener('change', () => {
+        const isReview = document.getElementById('type-review').checked;
+        codeGroup.style.display = isReview ? 'block' : 'none';
+        cardDiscussion.style.borderColor = isReview ? 'var(--border)' : 'var(--accent)';
+        cardReview.style.borderColor = isReview ? '#7c3aed' : 'var(--border)';
+    }));
+</script>
+{% endblock %}
+

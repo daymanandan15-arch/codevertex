@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}{{ post.title }} | Forum{% endblock %}
+
+{% block content %}
+<div class="post-layout" style="max-width: 900px; margin: 0 auto;">
+    <article class="card full-post">
+        <div class="post-header-area" style="display: flex; gap: 1.5rem;">
+            <div class="post-votes">
+                {% if current_user.is_authenticated %}
+                <form method="POST" action="{{ url_for('views.vote_post', id=post.id) }}">
+                    <input type="hidden" name="value" value="1">
+                    <button type="submit" class="vote-btn upvote" title="Upvote">▲</button>
+                </form>
+                {% else %}<button class="vote-btn upvote" disabled>▲</button>{% endif %}
+                <span class="score">{{ post.score }}</span>
+                {% if current_user.is_authenticated %}
+                <form method="POST" action="{{ url_for('views.vote_post', id=post.id) }}">
+                    <input type="hidden" name="value" value="-1">
+                    <button type="submit" class="vote-btn downvote" title="Downvote">▼</button>
+                </form>
+                {% else %}<button class="vote-btn downvote" disabled>▼</button>{% endif %}
+            </div>
+
+            <div class="post-body" style="flex:1;">
+                <div class="post-meta" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; display:flex; gap:1rem; align-items:center; flex-wrap:wrap;">
+                    {% if post.post_type == 'review_request' %}
+                    <span style="background: #7c3aed; color:#fff; font-size:0.75rem; padding:0.2rem 0.6rem; border-radius:999px;">📋 Code Review</span>
+                    {% endif %}
+                    {% if post.bounty and post.bounty > 0 %}
+                    <span style="background: rgba(249,115,22,0.15); color:#f97316; font-size:0.75rem; font-weight:800; padding:0.2rem 0.6rem; border-radius:999px; border:1px solid rgba(249,115,22,0.3);">💰 {{ post.bounty }} RP Bounty</span>
+                    {% endif %}
+                    Posted by
+                    <a href="{{ url_for('views.profile', username=post.author.username) }}"
+                       style="color: var(--accent); font-weight: 600; text-decoration:none;">
+                        @{{ post.author.username }}
+                        <span style="background: rgba(249,115,22,0.15); color: #f97316; font-size:0.75rem; padding: 0.1rem 0.5rem; border-radius:999px; margin-left:0.3rem;">
+                            ⭐ {{ post.author.reputation or 0 }} RP
+                        </span>
+                    </a>
+                    <span>{{ post.created_at.strftime('%B %d, %Y') }}</span>
+                </div>
+                <h1 style="font-size: 2rem; margin-bottom: 1.5rem;">{{ post.title }}</h1>
+                <div class="content-markdown" style="line-height: 1.7; color: #e4e4e7;">{{ post.content }}</div>
+
+                {% if post.post_type == 'review_request' and post.code_snippet %}
+                <div style="margin-top: 1.5rem; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);">
+                    <div style="background: var(--bg-elevated); padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="color: var(--text-muted); font-size:0.85rem; text-transform:uppercase; letter-spacing:0.05em; margin: 0; display:flex; align-items:center; gap:0.5rem;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                            Code Playground
+                        </h4>
+                        <div style="display: flex; gap: 0.75rem; align-items: center;">
+                            <select id="run-language" class="form-control" style="padding: 0.2rem 0.6rem; font-size: 0.8rem; background: var(--bg-primary); border: 1px solid var(--border); color: #fff; border-radius: 4px; height: 28px;">
+                                <option value="python">Python 3</option>
+                                <option value="javascript">JavaScript (Node)</option>
+                                <option value="sql">SQL (SQLite)</option>
+                            </select>
+                            <button id="run-code-btn" class="btn primary-btn" style="padding: 0 0.75rem; font-size: 0.8rem; height: 28px; display:flex; align-items:center; gap: 0.4rem;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                Run Code
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <textarea id="live-code-editor" spellcheck="false" style="width: 100%; min-height: 250px; background: #000000; border: none; padding: 1.5rem; color: #ededed; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; line-height: 1.6; outline: none; resize: vertical; display: block;">{{ post.code_snippet }}</textarea>
+                    
+                    <div id="run-output-container" style="display: none; border-top: 1px solid var(--border); background: #0a0a0a; padding: 1rem;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.5rem; font-weight: 600;">Console Output</div>
+                        <pre id="run-output" style="color: #e5e5e5; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.85rem; margin: 0; white-space: pre-wrap; word-break: break-all;"></pre>
+                        <pre id="run-error" style="color: #ef4444; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 0.85rem; margin: 0; white-space: pre-wrap; display: none; margin-top: 0.5rem;"></pre>
+                    </div>
+                </div>
+
+                <script>
+                    document.getElementById('run-code-btn').addEventListener('click', async () => {
+                        const btn = document.getElementById('run-code-btn');
+                        const outputContainer = document.getElementById('run-output-container');
+                        const outPre = document.getElementById('run-output');
+                        const errPre = document.getElementById('run-error');
+                        const code = document.getElementById('live-code-editor').value;
+                        const lang = document.getElementById('run-language').value;
+
+                        btn.innerHTML = '<span style="animation: pulse 1s infinite;">Running...</span>';
+                        btn.disabled = true;
+                        
+                        outputContainer.style.display = 'block';
+                        outPre.style.color = '#888888';
+                        outPre.textContent = 'Executing payload securely in sandbox...';
+                        errPre.style.display = 'none';
+
+                        try {
+                            const res = await fetch('/api/run-code', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ language: lang, code: code })
+                            });
+                            const data = await res.json();
+                            
+                            outPre.style.color = '#e5e5e5';
+                            if (data.error && data.error.trim() !== "") {
+                                errPre.style.display = 'block';
+                                errPre.textContent = data.error;
+                            }
+                            
+                            if (data.output && data.output.trim() !== "") {
+                                outPre.textContent = data.output;
+                            } else if (!data.error) {
+                                outPre.style.color = '#888888';
+                                outPre.textContent = 'Process exited with code 0 (No output)';
+                            } else {
+                                outPre.textContent = '';
+                            }
+                        } catch (e) {
+                            errPre.style.display = 'block';
+                            errPre.textContent = 'Fatal: Failed to connect to execution server.';
+                            outPre.textContent = '';
+                        } finally {
+                            btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Run Code';
+                            btn.disabled = false;
+                        }
+                    });
+                    
+                    /* Optional: allow tab insertion in textarea */
+                    document.getElementById('live-code-editor').addEventListener('keydown', function(e) {
+                        if (e.key == 'Tab') {
+                            e.preventDefault();
+                            var start = this.selectionStart;
+                            var end = this.selectionEnd;
+                            this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
+                            this.selectionStart = this.selectionEnd = start + 4;
+                        }
+                    });
+                </script>
+                {% endif %}
+            </div>
+        </div>
+    </article>
+
+    <section class="comments-section" style="margin-top: 3rem;">
+        <h3 style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);">
+            {{ post.comments.count() }} Comments
+        </h3>
+
+        {% if current_user.is_authenticated %}
+        <div class="card" style="margin-bottom: 2rem; padding: 1.5rem;">
+            <form action="{{ url_for('views.community_add_comment', id=post.id) }}" method="POST">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <textarea name="body" class="form-control" rows="4" placeholder="What are your thoughts?" required style="resize: vertical;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Post Comment</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="card" style="margin-bottom: 2rem; text-align: center; padding: 2rem;">
+            <p style="color: var(--text-muted);">Log in or sign up to leave a comment.</p>
+            <div style="margin-top: 1rem;">
+                <a href="{{ url_for('views.login') }}" class="btn" style="border: 1px solid var(--accent); color: var(--accent);">Log In</a>
+                <a href="{{ url_for('views.register') }}" class="btn btn-primary" style="margin-left: 1rem;">Sign Up</a>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="comments-list">
+            {% for comment in comments %}
+            <div class="card comment-card {% if comment.is_best_answer %}best-answer{% endif %}"
+                style="margin-bottom: 1rem; padding: 1.5rem; background: rgba(24, 24, 27, 0.4);
+                       {% if comment.is_best_answer %}border: 1px solid #22c55e; box-shadow: 0 0 16px rgba(34,197,94,0.15);{% endif %}">
+                {% if comment.is_best_answer %}
+                <div style="color: #22c55e; font-size: 0.85rem; font-weight: 700; margin-bottom: 0.75rem;">✅ Best Answer</div>
+                {% endif %}
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap:wrap; gap:0.5rem;">
+                    <div style="display:flex; align-items:center; gap:0.75rem;">
+                        <a href="{{ url_for('views.profile', username=comment.author.username) }}"
+                           style="font-weight: 600; color: var(--accent); font-size: 0.9rem; text-decoration:none;">
+                            @{{ comment.author.username }}
+                        </a>
+                        <span style="background: rgba(249,115,22,0.15); color:#f97316; font-size:0.75rem; padding:0.1rem 0.5rem; border-radius:999px;">
+                            ⭐ {{ comment.author.reputation or 0 }} RP
+                        </span>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
+                        <span style="color: var(--text-muted); font-size: 0.8rem;">{{ comment.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+                        {% if current_user.is_authenticated %}
+                        <form method="POST" action="{{ url_for('views.vote_comment', id=comment.id) }}" style="display:inline;">
+                            <input type="hidden" name="value" value="1">
+                            <button type="submit" class="vote-btn-sm" title="Upvote">▲ {{ comment.score }}</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('views.vote_comment', id=comment.id) }}" style="display:inline;">
+                            <input type="hidden" name="value" value="-1">
+                            <button type="submit" class="vote-btn-sm" title="Downvote">▼</button>
+                        </form>
+                        {% if current_user.id == post.author_id %}
+                        <form method="POST" action="{{ url_for('views.mark_best_answer', id=comment.id) }}" style="display:inline;">
+                            <button type="submit" class="vote-btn-sm" style="color: #22c55e; border: 1px solid #22c55e; border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.75rem; background: rgba(34,197,94,0.1); cursor: pointer;" title="Mark as best answer">
+                                ✅ Mark Best {% if post.bounty and post.bounty > 0 %}(Award {{ post.bounty }} RP){% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <p style="color: #d4d4d8; line-height: 1.6;">{{ comment.body }}</p>
+            </div>
+            {% else %}
+            <p class="empty-state" style="padding: 2rem 0;">No comments yet. Be the first!</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+
+
+<style>
+    .full-post {
+        padding: 2.5rem;
+        background: linear-gradient(145deg, rgba(24, 24, 27, 0.8) 0%, rgba(9, 9, 11, 0.8) 100%);
+        border-top: 2px solid var(--accent);
+    }
+
+    .post-votes {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 40px;
+    }
+
+    .vote-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .vote-btn.upvote:hover {
+        color: #f97316;
+        transform: translateY(-2px);
+    }
+
+    .vote-btn.downvote:hover {
+        color: #8b5cf6;
+        transform: translateY(2px);
+    }
+
+    .score {
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin: 0.5rem 0;
+    }
+</style>
+{% endblock %}

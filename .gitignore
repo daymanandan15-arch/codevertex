@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Databases
+*.db
+*.sqlite
+
+# IDEs
+.idea/
+.vscode/
+
+# Logs
+*.log
+run_out.txt
+500_error.txt

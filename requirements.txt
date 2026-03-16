@@ -1,0 +1,12 @@
+Flask
+Flask-SQLAlchemy
+PyMySQL
+APScheduler
+requests
+feedparser
+beautifulsoup4
+python-dotenv
+gunicorn
+Flask-Login
+Flask-WTF
+email-validator

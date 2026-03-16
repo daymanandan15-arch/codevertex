@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | Engineering Portal{% endblock %}
+
+{% block content %}
+<header class="hero">
+    <h1>Welcome, Engineer.</h1>
+    <p>Your centralized hub for industry news, jobs, roadmaps &amp; learning resources.</p>
+    <div class="live-badge" id="live-badge" title="Live sync active">
+        <span class="pulse-dot"></span> Live Feed
+    </div>
+</header>
+
+<div class="dashboard-grid">
+
+    <!-- ── NEWS ── -->
+    <div class="section-header">
+        <h2>Latest AI &amp; IT News</h2>
+        <a href="#" class="view-all">View All &rarr;</a>
+    </div>
+    <div class="slider-wrapper">
+        <button class="slider-btn prev-btn" aria-label="Scroll left">&lsaquo;</button>
+        <div class="card-list" id="news-slider">
+            {% for item in news %}
+            <article class="card">
+                <div class="card-meta">
+                    <span class="source badge">{{ item.source }}</span>
+                    <time>{{ item.published_at.strftime('%b %d, %Y') }}</time>
+                </div>
+                <h3><a href="{{ item.url }}" target="_blank" rel="noopener noreferrer">{{ item.title }}</a></h3>
+            </article>
+            {% else %}
+            <p class="empty-state">The background crawler is fetching the latest global news. Refresh in a moment.</p>
+            {% endfor %}
+        </div>
+        <button class="slider-btn next-btn" aria-label="Scroll right">&rsaquo;</button>
+    </div>
+
+    <!-- ── ROADMAPS ── -->
+    <div class="section-header" style="margin-top:2.5rem;">
+        <h2>Skill Roadmaps</h2>
+        <a href="{{ url_for('views.roadmaps_index') }}" class="view-all">View All &rarr;</a>
+    </div>
+    <div class="slider-wrapper">
+        <button class="slider-btn prev-btn" aria-label="Scroll left">&lsaquo;</button>
+        <div class="card-list" id="roadmaps-slider">
+            {% for rm in roadmaps %}
+            <article class="card roadmap-dash-card">
+                <div class="card-meta">
+                    <span class="badge">{{ rm.nodes.count() }} topics</span>
+                </div>
+                <h3>{{ rm.title }}</h3>
+                <p class="card-desc">{{ rm.description }}</p>
+                <a href="{{ url_for('views.roadmaps_detail', id=rm.id) }}" class="card-cta">Start &rarr;</a>
+            </article>
+            {% else %}
+            <p class="empty-state">No roadmaps seeded yet. Run <code>python generate_roadmaps.py</code>.</p>
+            {% endfor %}
+        </div>
+        <button class="slider-btn next-btn" aria-label="Scroll right">&rsaquo;</button>
+    </div>
+
+
+    <!-- ── JOBS ── -->
+    <div class="section-header" style="margin-top:2.5rem;">
+        <h2>Recent Job Openings</h2>
+        <a href="#" class="view-all">View All &rarr;</a>
+    </div>
+    <div class="slider-wrapper">
+        <button class="slider-btn prev-btn" aria-label="Scroll left">&lsaquo;</button>
+        <div class="card-list" id="jobs-slider">
+            {% for job in jobs %}
+            <article class="card job-card">
+                <h3><a href="{{ job.url }}" target="_blank" rel="noopener noreferrer">{{ job.title }}</a></h3>
+                <div class="job-meta">
+                    <span class="company">🏢 {{ job.company }}</span>
+                    <span class="location">📍 {{ job.location }}</span>
+                </div>
+            </article>
+            {% else %}
+            <p class="empty-state">No job listings found. The aggregator pipeline is scheduled to run.</p>
+            {% endfor %}
+        </div>
+        <button class="slider-btn next-btn" aria-label="Scroll right">&rsaquo;</button>
+    </div>
+
+</div><!-- /.dashboard-grid -->
+{% endblock %}

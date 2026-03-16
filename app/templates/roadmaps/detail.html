@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+{% block title %}{{ roadmap.title }} | Engineering Portal{% endblock %}
+
+{% block content %}
+<div class="roadmap-detail-header">
+    <a href="{{ url_for('views.roadmaps_index') }}" class="back-link">← All Roadmaps</a>
+    <h1>{{ roadmap.title }}</h1>
+    <p class="roadmap-subtitle">{{ roadmap.description }}</p>
+    <div class="roadmap-meta">
+        <span class="badge">{{ nodes|length }} Topics</span>
+        {% if current_user.is_authenticated %}
+        <span class="badge" id="progress-badge">{{ completed_count }} / {{ nodes|length }} Completed</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="roadmap-timeline">
+    {% for node in nodes %}
+    {% set done = current_user.is_authenticated and node.id in completed_node_ids %}
+    <div class="timeline-node {{ 'completed' if done else '' }}" id="node-{{ node.id }}">
+        <div class="timeline-connector"></div>
+        <div class="timeline-dot {{ 'done-dot' if done else '' }}">{{ loop.index }}</div>
+
+        <div class="timeline-content">
+            <div class="timeline-top">
+                <div>
+                    <h3 class="node-title">{{ node.title }}</h3>
+                    {% if node.skills_tags %}
+                    <div style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.4rem;">
+                        {% for tag in node.skills_tags.split(',') %}
+                        <span style="background: rgba(56,189,248,0.1); color: var(--accent); font-size:0.7rem; padding:0.15rem 0.5rem; border-radius:999px; border: 1px solid rgba(56,189,248,0.25);">{{ tag.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% if current_user.is_authenticated %}
+                <form method="POST"
+                    action="{{ url_for('views.roadmaps_complete_node', roadmap_id=roadmap.id, node_id=node.id) }}">
+                    <button type="submit" class="mark-btn {{ 'done-btn' if done else '' }}">
+                        {{ '✓ Done' if done else 'Mark Done' }}
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- Free Resource Links -->
+            {% set res_list = node.resources.all() %}
+            {% if res_list %}
+            <div class="node-resources">
+                <p class="resources-label">📚 Free Resources</p>
+                <div class="resources-grid">
+                    {% for res in res_list %}
+                    <a href="{{ res.url }}" target="_blank" rel="noopener noreferrer"
+                        class="resource-chip chip-{{ res.rtype|lower }}">
+                        {% if res.rtype == 'Video' %}🎥
+                        {% elif res.rtype == 'Course' %}🎓
+                        {% elif res.rtype == 'Docs' %}📖
+                        {% else %}📄
+                        {% endif %}
+                        {{ res.title }}
+                        <span class="chip-type">{{ res.rtype }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Code Sandbox -->
+            {% if node.sandbox_language %}
+            <div class="sandbox-panel" style="margin-top: 1.25rem; border-top: 1px solid var(--border); padding-top: 1.25rem;">
+                <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom:0.75rem;">
+                    <p class="resources-label" style="margin-bottom:0;">▶ Code Sandbox
+                        <span style="color: var(--accent); font-weight:600; margin-left:0.3rem; text-transform:none;">{{ node.sandbox_language }}</span>
+                    </p>
+                    <button class="mark-btn" onclick="runCode('{{ node.id }}')" id="run-btn-{{ node.id }}">▶ Run</button>
+                </div>
+                <textarea id="sandbox-{{ node.id }}" class="form-control"
+                    style="font-family: 'Courier New', monospace; font-size: 0.88rem; background: #0d0d0d; color: #a5f3fc; min-height: 140px; resize: vertical; border-radius: 8px;"
+                >{{ node.sandbox_starter_code or '' }}</textarea>
+                <pre id="output-{{ node.id }}"
+                    style="display:none; margin-top:0.75rem; background:#0d0d0d; border:1px solid var(--border); border-radius:8px; padding:1rem; font-size:0.85rem; color:#86efac; white-space:pre-wrap; word-break:break-word;"></pre>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+async function runCode(nodeId) {
+    const textarea = document.getElementById('sandbox-' + nodeId);
+    const output = document.getElementById('output-' + nodeId);
+    const btn = document.getElementById('run-btn-' + nodeId);
+    const language = textarea.closest('.sandbox-panel').querySelector('span').textContent.trim();
+    btn.textContent = '⏳ Running...';
+    btn.disabled = true;
+    output.style.display = 'block';
+    output.textContent = 'Running...';
+    try {
+        const res = await fetch('/api/run-code', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ language: language, code: textarea.value })
+        });
+        const data = await res.json();
+        output.style.color = data.error ? '#f87171' : '#86efac';
+        output.textContent = data.output || data.error || '(no output)';
+    } catch(e) {
+        output.style.color = '#f87171';
+        output.textContent = 'Error: ' + e.message;
+    }
+    btn.textContent = '▶ Run';
+    btn.disabled = false;
+}
+</script>
+
+
+<style>
+    /* ── Roadmap Detail Page ── */
+    .roadmap-detail-header {
+        margin-bottom: 3.5rem;
+    }
+
+    .back-link {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+
+    .back-link:hover {
+        color: var(--accent);
+    }
+
+    .roadmap-detail-header h1 {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .roadmap-subtitle {
+        color: var(--text-muted);
+        font-size: 1.1rem;
+        max-width: 700px;
+        margin-bottom: 1rem;
+    }
+
+    .roadmap-meta {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    .roadmap-timeline {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .timeline-node {
+        display: flex;
+        position: relative;
+        gap: 1.5rem;
+        padding-bottom: 1rem;
+    }
+
+    .timeline-connector {
+        position: absolute;
+        left: calc(22px - 1px);
+        top: 44px;
+        width: 2px;
+        height: calc(100% - 44px);
+        background: linear-gradient(to bottom, var(--accent), transparent);
+        opacity: 0.25;
+    }
+
+    .timeline-node:last-child .timeline-connector {
+        display: none;
+    }
+
+    .timeline-dot {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        background: var(--bg-secondary);
+        border: 2px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        transition: all 0.3s;
+        position: relative;
+        z-index: 1;
+    }
+
+    .timeline-node.completed .timeline-dot,
+    .done-dot {
+        background: rgba(56, 189, 248, 0.15);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .timeline-content {
+        flex: 1;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1rem;
+        transition: border-color 0.2s;
+    }
+
+    .timeline-node.completed .timeline-content {
+        border-color: rgba(56, 189, 248, 0.25);
+    }
+
+    .timeline-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .node-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .mark-btn {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        padding: 0.3rem 0.9rem;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .mark-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    .done-btn {
+        background: rgba(56, 189, 248, 0.1);
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    /* ── Resource Chips ── */
+    .resources-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--text-muted);
+        margin-bottom: 0.6rem;
+    }
+
+    .resources-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .resource-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: 9999px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        border: 1px solid var(--border);
+        background: var(--bg-elevated);
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .resource-chip:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent);
+        color: var(--accent);
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.15);
+    }
+
+    .chip-type {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .chip-video {
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    /* red tint for Video */
+    .chip-course {
+        border-color: rgba(168, 85, 247, 0.3);
+    }
+
+    /* purple tint for Course */
+    .chip-docs {
+        border-color: rgba(56, 189, 248, 0.3);
+    }
+
+    /* blue tint for Docs */
+    .chip-article {
+        border-color: rgba(34, 197, 94, 0.3);
+    }
+
+    /* green tint for Article */
+</style>
+{% endblock %}

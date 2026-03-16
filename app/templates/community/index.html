@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Dev Community | Engineering Portal{% endblock %}
+
+{% block content %}
+<div style="display:grid; grid-template-columns:1fr 300px; gap:2rem; align-items:start; max-width:1200px; margin:0 auto;">
+
+    <!-- MAIN FEED -->
+    <div>
+        <!-- Sort Tabs -->
+        <div class="sort-tabs" style="display:flex; gap:0.25rem; margin-bottom:1.5rem; background:rgba(24,24,27,0.6); border:1px solid var(--border); border-radius:10px; padding:0.35rem;">
+            {% for s, icon, label in [('hot','🔥','Hot'),('new','🆕','New'),('top','📈','Top')] %}
+            <a href="{{ url_for('views.community_index', sort=s) }}"
+               style="flex:1; text-align:center; padding:0.5rem 0.75rem; border-radius:7px; font-size:0.85rem; font-weight:600; text-decoration:none; transition:all 0.2s;
+                      background: {{'rgba(56,189,248,0.15)' if sort==s else 'transparent'}};
+                      color: {{'var(--accent)' if sort==s else 'var(--text-muted)'}};">
+                {{ icon }} {{ label }}
+            </a>
+            {% endfor %}
+            <a href="{{ url_for('views.community_create_post') }}"
+               style="padding:0.5rem 1rem; border-radius:7px; background:var(--accent); color:#000; font-size:0.85rem; font-weight:700; text-decoration:none; white-space:nowrap; margin-left:auto;">
+                + Post
+            </a>
+        </div>
+
+        <!-- Posts -->
+        {% for post in posts %}
+        <article class="post-card" style="display:flex; gap:0; margin-bottom:0.75rem; border-radius:12px; overflow:hidden; border:1px solid var(--border); background:var(--bg-secondary); transition:border-color 0.2s;"
+                 onmouseover="this.style.borderColor='rgba(56,189,248,0.4)'" onmouseout="this.style.borderColor='var(--border)'">
+
+            <!-- Vote Column -->
+            <div style="display:flex; flex-direction:column; align-items:center; gap:2px; padding:0.75rem 0.5rem; background:rgba(0,0,0,0.2); min-width:50px;">
+                {% if current_user.is_authenticated %}
+                <form method="POST" action="{{ url_for('views.vote_post', id=post.id) }}">
+                    <input type="hidden" name="value" value="1">
+                    <button type="submit" style="background:none;border:none;color:var(--text-muted);font-size:1.1rem;cursor:pointer;padding:2px;transition:color 0.2s;" onmouseover="this.style.color='#f97316'" onmouseout="this.style.color='var(--text-muted)'">▲</button>
+                </form>
+                {% else %}<span style="color:var(--text-muted);font-size:1.1rem;">▲</span>{% endif %}
+                <span style="font-weight:800; font-size:0.85rem; color:{% if post.score > 0 %}#f97316{% elif post.score < 0 %}#8b5cf6{% else %}var(--text-muted){% endif %};">{{ post.score }}</span>
+                {% if current_user.is_authenticated %}
+                <form method="POST" action="{{ url_for('views.vote_post', id=post.id) }}">
+                    <input type="hidden" name="value" value="-1">
+                    <button type="submit" style="background:none;border:none;color:var(--text-muted);font-size:1.1rem;cursor:pointer;padding:2px;transition:color 0.2s;" onmouseover="this.style.color='#8b5cf6'" onmouseout="this.style.color='var(--text-muted)'">▼</button>
+                </form>
+                {% else %}<span style="color:var(--text-muted);font-size:1.1rem;">▼</span>{% endif %}
+            </div>
+
+            <!-- Content -->
+            <div style="flex:1; padding:0.9rem 1rem;">
+                <!-- Subreddit + meta pill row -->
+                <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;">
+                    {% if post.subreddit %}
+                    <a href="{{ url_for('views.subreddit_detail', slug=post.subreddit.slug) }}"
+                       style="font-size:0.78rem; font-weight:700; color:#fff; text-decoration:none; background:{{ post.subreddit.color }}; padding:0.15rem 0.6rem; border-radius:999px;">
+                        {{ post.subreddit.icon_emoji }} c/{{ post.subreddit.slug }}
+                    </a>
+                    {% endif %}
+                    {% if post.flair %}
+                    <span style="font-size:0.72rem; padding:0.1rem 0.5rem; background:rgba(167,139,250,0.15); color:#a78bfa; border-radius:999px; border:1px solid rgba(167,139,250,0.3);">{{ post.flair }}</span>
+                    {% endif %}
+                    {% if post.post_type == 'review_request' %}
+                    <span style="font-size:0.72rem; padding:0.1rem 0.5rem; background:rgba(124,58,237,0.15); color:#7c3aed; border-radius:999px; border:1px solid rgba(124,58,237,0.3);">📋 Code Review</span>
+                    {% endif %}
+                    {% if post.bounty %}
+                    <span style="font-size:0.72rem; font-weight:800; padding:0.1rem 0.5rem; background:rgba(249,115,22,0.15); color:#f97316; border-radius:999px; border:1px solid rgba(249,115,22,0.3);">💰 {{ post.bounty }} RP Bounty</span>
+                    {% endif %}
+                    <span style="font-size:0.76rem; color:var(--text-muted);">
+                        Posted by <a href="{{ url_for('views.profile', username=post.author.username) }}" style="color:var(--accent);text-decoration:none;">@{{ post.author.username }}</a>
+                        · {{ post.created_at.strftime('%b %d') }}
+                    </span>
+                </div>
+                <h3 style="margin:0 0 0.4rem; font-size:1.05rem;">
+                    <a href="{{ url_for('views.community_detail', id=post.id) }}" style="color:var(--text-primary);text-decoration:none;">{{ post.title }}</a>
+                </h3>
+                <div style="font-size:0.8rem; color:var(--text-muted);">
+                    💬 {{ post.comments.count() }} comments
+                </div>
+            </div>
+        </article>
+        {% else %}
+        <div style="text-align:center; padding:4rem 2rem; color:var(--text-muted);">
+            <div style="font-size:3rem; margin-bottom:1rem;">🌱</div>
+            <p>No posts yet. <a href="{{ url_for('views.community_create_post') }}" style="color:var(--accent);">Start the conversation!</a></p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside>
+        <!-- Communities Panel -->
+        <div class="card" style="padding:1.25rem; margin-bottom:1.25rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="font-size:0.95rem; font-weight:700; margin:0;">🌐 Communities</h3>
+                <a href="{{ url_for('views.subreddits_list') }}" style="font-size:0.78rem; color:var(--accent); text-decoration:none;">See all</a>
+            </div>
+            {% for sub in subreddits[:8] %}
+            <a href="{{ url_for('views.subreddit_detail', slug=sub.slug) }}" style="display:flex; align-items:center; gap:0.6rem; padding:0.5rem 0; border-bottom:1px solid rgba(255,255,255,0.05); text-decoration:none; color:var(--text-primary);" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text-primary)'">
+                <span style="width:32px; height:32px; border-radius:50%; background:{{ sub.color }}22; border:1px solid {{ sub.color }}; display:flex; align-items:center; justify-content:center; font-size:0.9rem; flex-shrink:0;">{{ sub.icon_emoji }}</span>
+                <div style="flex:1; min-width:0;">
+                    <div style="font-size:0.85rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">c/{{ sub.slug }}</div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">{{ sub.member_count }} members</div>
+                </div>
+                {% if sub.id in joined_ids %}
+                <span style="font-size:0.7rem; color:#22c55e; border:1px solid #22c55e; padding:0.1rem 0.4rem; border-radius:999px;">✓</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('views.create_subreddit') }}" class="btn btn-primary" style="width:100%; display:block; text-align:center; margin-top:1rem; font-size:0.85rem; padding:0.5rem;">+ Create Community</a>
+            {% endif %}
+        </div>
+
+        <!-- Leaderboard -->
+        <div class="card" style="padding:1.25rem;">
+            <h3 style="font-size:0.95rem; font-weight:700; margin-bottom:1rem;">🏆 Top Contributors</h3>
+            {% set top_users = [] %}
+            {% for post in posts[:20] %}
+              {% if post.author not in top_users %}{% if top_users.append(post.author) %}{% endif %}{% endif %}
+            {% endfor %}
+            {% for user in top_users[:5] %}
+            <a href="{{ url_for('views.profile', username=user.username) }}" style="display:flex; align-items:center; gap:0.6rem; padding:0.4rem 0; text-decoration:none; color:var(--text-primary);">
+                <span style="width:28px; height:28px; border-radius:50%; background:rgba(56,189,248,0.15); border:1px solid var(--accent); display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; color:var(--accent);">{{ user.username[0].upper() }}</span>
+                <span style="font-size:0.85rem; flex:1;">@{{ user.username }}</span>
+                <span style="font-size:0.75rem; color:#f97316;">⭐ {{ user.reputation or 0 }}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </aside>
+</div>
+{% endblock %}
