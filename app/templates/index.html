@@ -54,7 +54,7 @@
             <article class="card">
                 <div class="card-meta">
                     <span class="badge" style="background-image: linear-gradient(135deg, rgba(99,102,241,0.1), rgba(6,182,212,0.1)); color: #818cf8; border-color: rgba(99,102,241,0.2);">
-                        r/{{ post.subreddit.name }}
+                        r/{{ post.subreddit.name if post.subreddit else "General" }}
                     </span>
                     <time>{{ post.created_at.strftime('%b %d') }}</time>
                 </div>
