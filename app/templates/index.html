@@ -58,7 +58,8 @@
                     </span>
                     <time>{{ post.created_at.strftime('%b %d') if post.created_at else 'Recently' }}</time>
                 </div>
-                <h3 style="font-size:0.95rem;"><a href="{{ url_for('views.community_post_detail', post_id=post.id) }}">{{ post.title }}</a></h3>
+                <h3 style="font-size:0.95rem;"><a href="{{ url_for('views.community_detail', id=post.id) }}">{{ post.title }}</a></h3>
+
                 <div style="margin-top: auto; padding-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted); display:flex; justify-content:space-between; align-items:center; border-top: 1px solid var(--border); margin-top:0.75rem;">
                     <span>@{{ post.author.username if post.author else 'Anonymous' }}</span>
                     <span style="display:flex; align-items:center; gap:0.25rem;">💬 {{ post.comments.count() }}</span>

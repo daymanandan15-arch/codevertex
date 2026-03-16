@@ -232,7 +232,7 @@ def community_create_post():
                 'title': post.title,
                 'author': current_user.username,
                 'subreddit': post.subreddit.name if post.subreddit else 'General',
-                'url': url_for('views.community_post_detail', post_id=post.id)
+                'url': url_for('views.community_detail', id=post.id)
             })
         except Exception as e:
             print(f"Socket emit failed: {e}")
@@ -800,20 +800,6 @@ def mentors_directory():
     mentors = User.query.filter_by(is_mentor=True).all()
     return render_template('community/mentors.html', mentors=mentors)
 
-import traceback
 
-@bp.app_errorhandler(Exception)
-def handle_any_exception(e):
-    # This dumps the full stack trace to the webpage so the Agent can diagnose live columns drift crashes.
-    return f"""
-    <html>
-      <body style="background:#090b14; color:#ef4444; padding:2rem; font-family:monospace; line-height:1.5;">
-        <h2 style="color:#f87171;">🚨 Live Debug Traceback (Agent Diagnosis) 🚨</h2>
-        <pre style="background:#11131a; padding:1rem; border-radius:8px; border:1px solid #dc2626; overflow:auto; color: #fdfdfd; font-size: 0.85rem;">
-{traceback.format_exc()}
-        </pre>
-      </body>
-    </html>
-    """, 500
 
 
