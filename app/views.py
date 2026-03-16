@@ -65,10 +65,17 @@ def index():
     latest_news = get_diverse_news(15)
     all_jobs    = JobListing.query.filter_by(is_active=True).order_by(desc(JobListing.posted_at)).limit(24).all()
     roadmaps    = Roadmap.query.all()
-    resources   = Resource.query.order_by(desc(Resource.created_at)).limit(12).all()
+    try:
+        resources = Resource.query.order_by(desc(Resource.created_at)).limit(12).all()
+    except Exception as e:
+        resources = Resource.query.limit(12).all()
 
     # ── FORUM INTEGRATION ──
-    posts       = Post.query.order_by(desc(Post.created_at)).limit(4).all()
+    try:
+        posts = Post.query.order_by(desc(Post.created_at)).limit(4).all()
+    except Exception as e:
+        posts = Post.query.limit(4).all()
+
 
     matched_jobs = compute_matched_jobs(all_jobs)
     # Sort: matched jobs first (by score desc), then the rest
