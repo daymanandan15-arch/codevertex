@@ -3,7 +3,8 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 
 from app import create_app
-from app.extensions import db
+from app.extensions import db, socketio
+
 from app.models.roadmap import Roadmap
 from generate_roadmaps import seed_roadmaps
 
@@ -25,7 +26,8 @@ with flask_app.app_context():
 if __name__ == '__main__':
 
     # async_mode='threading' in SocketIO means werkzeug handles everything.
-    flask_app.run(host='0.0.0.0', port=5000, threaded=True, use_reloader=False)
+    socketio.run(flask_app, host='0.0.0.0', port=5000, use_reloader=False)
+
 
 
 
