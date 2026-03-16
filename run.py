@@ -6,8 +6,10 @@ from app import create_app
 from app.extensions import db
 
 flask_app = create_app()
+app = flask_app  # Alias for Gunicorn in Dockerfile
 
 with flask_app.app_context():
+
     # Ensure tables are created automatically on empty production databases
     db.create_all()
 
