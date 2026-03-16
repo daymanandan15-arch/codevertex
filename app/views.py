@@ -63,7 +63,11 @@ def compute_matched_jobs(jobs):
 @bp.route('/')
 def index():
     latest_news = get_diverse_news(15)
-    all_jobs    = JobListing.query.filter_by(is_active=True).order_by(desc(JobListing.posted_at)).limit(24).all()
+    try:
+        all_jobs = JobListing.query.filter_by(is_active=True).order_by(desc(JobListing.posted_at)).limit(24).all()
+    except Exception:
+        all_jobs = JobListing.query.filter_by(is_active=True).limit(24).all()
+
     roadmaps    = Roadmap.query.all()
     try:
         resources = Resource.query.order_by(desc(Resource.created_at)).limit(12).all()
