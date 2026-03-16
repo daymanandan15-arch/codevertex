@@ -12,3 +12,4 @@ Flask-WTF
 email-validator
 Flask-SocketIO==5.3.6
 eventlet==0.33.3
+psycopg2-binary==2.9.9
