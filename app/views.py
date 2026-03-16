@@ -245,7 +245,11 @@ def community_create_post():
             return redirect(url_for('views.subreddit_detail', slug=post.subreddit.slug))
         return redirect(url_for('views.community_detail', id=post.id))
         
-    subreddits = Subreddit.query.order_by(Subreddit.name).all()
+    try:
+        subreddits = Subreddit.query.order_by(Subreddit.name).all()
+    except Exception:
+        subreddits = Subreddit.query.all()
+
     # Pre-select subreddit from query param (e.g., when clicking "Post" from a subreddit page)
     preselect = request.args.get('sub', '')
     return render_template('community/create.html', subreddits=subreddits, preselect=preselect)
